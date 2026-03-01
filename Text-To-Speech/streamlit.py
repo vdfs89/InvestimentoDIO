@@ -6,11 +6,9 @@ from openai import OpenAI
 from gtts import gTTS
 
 # --- Configuração da Página ---
-st.set_page_config(page_title="FluencyForge Pro", page_icon="🎙️")
+st.set_page_config(page_title="FinanceForge", page_icon="💸")
 
 # --- Acesso Seguro aos Secrets ---
-# O Streamlit busca automaticamente no arquivo .streamlit/secrets.toml (local)
-# ou nas configurações do dashboard (Cloud)
 try:
     GROQ_KEY = st.secrets["GROQ_API_KEY"]
     GEMINI_KEY = st.secrets["GEMINI_API_KEY"]
@@ -26,8 +24,6 @@ client_openai = OpenAI(api_key=OPENAI_KEY)
 
 def get_ai_response(messages):
     """Lógica de Failover: Tenta Groq -> Gemini -> OpenAI"""
-    
-    # 1. Tentativa com Groq (Llama 3.3) - Prioridade pela velocidade
     try:
         response = client_groq.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -36,18 +32,13 @@ def get_ai_response(messages):
         return response.choices[0].message.content, "Groq (Llama)"
     except Exception as e:
         st.warning(f"Groq offline: {e}. Alternando para Gemini...")
-
-    # 2. Tentativa com Gemini (1.5 Flash) - Backup robusto
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
-        # Simplificando o histórico para o Gemini
         prompt = f"System Context: {messages[0]['content']}\n\nUser: {messages[-1]['content']}"
         response = model.generate_content(prompt)
         return response.text, "Google Gemini"
     except Exception as e:
         st.warning(f"Gemini offline: {e}. Alternando para OpenAI...")
-
-    # 3. Última instância: OpenAI (GPT-4o-mini)
     try:
         response = client_openai.chat.completions.create(
             model="gpt-4o-mini",
@@ -58,7 +49,6 @@ def get_ai_response(messages):
         return "Sorry, I'm currently unable to connect to any AI models.", "Error"
 
 def play_audio(text):
-    """Gera e reproduz áudio automaticamente no navegador"""
     try:
         tts = gTTS(text=text, lang='en')
         tts.save("voice.mp3")
@@ -70,28 +60,24 @@ def play_audio(text):
         st.error("Erro ao gerar áudio.")
 
 # --- Interface ---
-st.title("🎙️ FluencyForge: Conversa Inteligente")
+st.title("💸 FinanceForge: Financial Chatbot in English")
 
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are a helpful English tutor. Correct grammar mistakes and explain why briefly."}
+        {"role": "system", "content": "You are a financial assistant. Always reply in English and focus on finance topics. Help the user understand financial concepts, investments, banking, and personal finance. Be clear and friendly."}
     ]
 
-# Renderização do Histórico
 for msg in st.session_state.messages:
     if msg["role"] != "system":
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-# Entrada de Usuário
-if prompt := st.chat_input("Practice your English..."):
+if prompt := st.chat_input("Ask about finance, investments, banking..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
-
-    with st.spinner("Waiting for tutor..."):
+    with st.spinner("Waiting for financial assistant..."):
         resposta, provider = get_ai_response(st.session_state.messages)
-        
     with st.chat_message("assistant"):
         st.markdown(f"**[{provider}]** {resposta}")
         st.session_state.messages.append({"role": "assistant", "content": resposta})
