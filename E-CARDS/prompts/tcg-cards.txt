@@ -1,0 +1,29 @@
+[action]
+create a script to create a table in mysql
+
+[context]
+- the first table is a table to save a pokemon tcg cards
+- the second table is a tableto save collections set
+
+coonnect to tables with FOREIGN KEY
+
+[information]
+first table: tbl_cards
+- id
+- HP
+- name
+- type
+- stage
+- info
+- attack
+- damage
+- weak
+- ressis.
+- retreat
+- cardNumberInCollection
+
+second table: tbl_collections
+- id
+- collectionsSetName
+- release Date
+- totalCardsInCollection
